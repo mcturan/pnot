@@ -1,7 +1,7 @@
 # PNOT — CLAUDE.md
 
 ## Proje Özeti
-**PNOT** (pnot.app) — Takımlar için proje not defteri. WhatsApp/Telegram'da kaybolan proje detaylarını, görevleri ve kararları organize eder.
+**PNOT** (pnot.app) — Takımlar için proje not defteri. WhatsApp/Telegram'da kaybolan proje detaylarını organize eder. Pinocchio karakterleri (Pino/Pina), XP sistemi ve global topluluk ile oyunlaştırılmış.
 
 **Dizin:** `/home/turan/pnot-project`
 **Dev server:** `cd apps/web && npm run dev` → http://localhost:3000
@@ -15,140 +15,174 @@
 - **Web:** Next.js 14.2.5 (App Router), Tailwind CSS, TypeScript
 - **Mobile:** Expo + React Native (`@react-native-firebase/*`)
 - **Backend:** Firebase (Firestore, Auth, Cloud Functions v2, FCM, Storage)
-- **Monorepo:** `packages/shared` → `@pnot/shared` (ortak TypeScript tipleri)
+- **i18n:** 10 dil (TR, EN, DE, ES, FR, PT, JA, RU, AR[RTL], ZH)
+- **Monorepo:** `packages/shared` → `@pnot/shared`
 
 ### Dizin Yapısı
 ```
 pnot-project/
 ├── apps/
-│   ├── web/          ← Next.js 14 + Tailwind
-│   └── mobile/       ← Expo + React Native
-├── packages/
-│   └── shared/       ← Ortak tipler (Project, Page, Note, Invite...)
+│   ├── web/src/
+│   │   ├── app/
+│   │   │   ├── page.tsx                      ← Landing (i18n + Pinocchio hero)
+│   │   │   ├── community/page.tsx            ← Global topluluk (herkese açık)
+│   │   │   ├── auth/login/page.tsx
+│   │   │   └── dashboard/
+│   │   │       ├── layout.tsx                ← Auth guard + i18n nav
+│   │   │       ├── page.tsx                  ← Proje listesi
+│   │   │       ├── projects/[projectId]/
+│   │   │       │   ├── page.tsx              ← Proje sayfaları
+│   │   │       │   └── [pageId]/page.tsx     ← Notlar + thread + görevler
+│   │   │       └── invite/[token]/page.tsx
+│   │   ├── components/
+│   │   │   ├── PinoCharacter.tsx             ← SVG karakter (Pino/Pina, mood, outfit)
+│   │   │   ├── PinoHelper.tsx               ← Floating asistan (sağ alt köşe)
+│   │   │   └── LanguageSwitcher.tsx
+│   │   ├── hooks/useAuth.ts
+│   │   └── lib/
+│   │       ├── firebase.ts
+│   │       ├── auth.ts
+│   │       ├── projects.ts
+│   │       ├── notes.ts
+│   │       └── i18n/
+│   │           ├── translations.ts           ← 10 dil, 50+ anahtar
+│   │           └── context.tsx              ← I18nProvider + useI18n()
+│   └── mobile/                              ← Expo skeleton
+├── packages/shared/src/types.ts             ← Tüm TypeScript tipleri
 ├── firebase/
-│   ├── functions/    ← Cloud Functions v2 (TypeScript)
+│   ├── functions/src/index.ts               ← 8 Cloud Function
 │   ├── firestore.rules
 │   ├── storage.rules
-│   ├── firestore.indexes.json
-│   └── firebase.json
+│   └── firestore.indexes.json
 ├── CLAUDE.md
 └── SETUP.md
 ```
 
 ---
 
-## Veri Modeli (Firestore)
+## Veri Modeli
 
 ```
-projects/{projectId}
-  ├── name, description, emoji, color
-  ├── ownerUid, members[{uid, displayName, photoURL, role}]
-  ├── isArchived: boolean
-  └── createdAt
-
-projects/{projectId}/pages/{pageId}
-  ├── title, icon, order
-  └── createdBy, createdAt
-
 projects/{projectId}/pages/{pageId}/notes/{noteId}
-  ├── content (string)
-  ├── authorUid, authorName, authorPhoto
-  ├── parentNoteId: null | string   ← null = root, string = thread reply
-  ├── isPinned: boolean
-  ├── isTask: boolean
-  ├── taskStatus: 'todo' | 'doing' | 'done'
-  ├── assignedTo: string[]
-  ├── replyCount: number
-  └── createdAt, updatedAt
-
-invites/{token}
-  ├── projectId, projectName, projectEmoji
-  ├── role: 'owner' | 'editor' | 'viewer'
-  ├── createdBy, createdByName
-  └── expiresAt (7 gün)
+  └── parentNoteId: null | string  ← thread sistemi
 
 users/{uid}
-  ├── displayName, email, photoURL
   ├── plan: 'free' | 'pro'
-  └── createdAt
+  ├── character: 'pino' | 'pina'
+  ├── characterOutfit: 'casual' | 'business' | 'student' | 'creative'
+  ├── xp, level, streak
+  ├── noteCount, taskCount, helpGivenCount
+  └── lastLoginAt
 
-fcmTokens/{uid}
-  └── token (FCM push token)
+globalProjects/{id}               ← Toplulukla paylaşılan projeler (herkese açık)
+  ├── projectId, ownerUid, ownerCharacter
+  ├── title, description, tags[], helpTypes[]
+  ├── helpersCount, viewsCount
+  └── isOpen
+
+helpOffers/{id}                   ← Yardım teklifleri
+  └── globalProjectId, helperUid, message
+
+invites/{token}                   ← 7 günlük davet linkleri
+fcmTokens/{uid}                   ← Push token
 ```
 
 ---
 
-## Cloud Functions (firebase/functions/src/index.ts)
+## Cloud Functions
 
-| Function | Açıklama |
-|----------|----------|
-| `createInvite` | Proje sahibi çağırır, 7 günlük davet token'ı oluşturur |
-| `acceptInvite` | Davet linki ile üyeliği onaylar, projeye ekler |
-| `onNoteCreated` | Yeni not yazıldığında diğer üyelere FCM push gönderir |
-| `checkProjectLimit` | Ücretsiz plan: max 5 proje kontrolü |
+| Function | XP | Açıklama |
+|----------|-----|----------|
+| `createInvite` | — | Proje daveti (7 günlük token) |
+| `acceptInvite` | +20 | Daveti kabul et, projeye katıl |
+| `checkProjectLimit` | — | Ücretsiz: max 5 proje kontrolü |
+| `onNoteCreated` | +5 | Not yazınca XP + diğer üyelere push |
+| `onNoteUpdated` | +15 | Görev tamamlanınca XP |
+| `onHelpOfferCreated` | +30 | Toplulukta yardım edince XP |
+| `recordLogin` | +10 | Günlük giriş → streak + XP |
+| `shareProjectGlobally` | +25 | Projeyi toplulukla paylaş |
 
 ---
 
-## İş Mantığı
+## Pinocchio Sistemi
 
-### Ücretsiz Plan Limiti
-- `FREE_PROJECT_LIMIT = 5` (`packages/shared/src/types.ts`)
-- `checkProjectLimit` Cloud Function server-side doğrular
-- Client-side `ownedCount >= FREE_PROJECT_LIMIT` kontrolü ile UI engeller
+### Karakterler
+- **Pino** (erkek): şapka, iş kıyafeti, öğrenci kıyafeti, casual, creative
+- **Pina** (kız): saç + fiyonk, aynı outfit seçenekleri
+- Kayıtta seçilir, `users/{uid}.character` alanında tutulur
 
-### Note Thread Sistemi
-- `parentNoteId: null` → root not
-- `parentNoteId: "someNoteId"` → thread yanıtı
-- UI'da derinlik 2-3 seviyede sınırlandırılmalı (okunabilirlik)
+### Burun boyutu ↔ XP
+| XP | Burun | Anlam |
+|----|-------|-------|
+| 0-9 | Çok uzun | Yeni başladı |
+| 10-49 | Uzun | Çalışıyor |
+| 50-199 | Orta | İyi gidiyor |
+| 200-499 | Kısa | Üretken |
+| 500+ | Çok kısa ★ | Usta |
 
-### Görev (Task) Sistemi
-- Her not göreve dönüştürülebilir: `isTask: true`
-- Durum sırası: `todo → doing → done` (tıklayarak değişir)
-- Kanban view: sayfanın görev notlarını kolona göre grupla
+### Mood sistemi
+`happy | thinking | excited | sad | working` → göz kaşı + ağız şekli değişir
 
-### Davet Sistemi
-- Sadece proje sahibi davet linki oluşturabilir
-- Link: `pnot.app/dashboard/invite/{token}`
-- Token 7 gün geçerli
+### PinoHelper (floating asistan)
+- Sağ altta, her sayfada
+- Tıklayınca konuşma balonu açılır
+- XP, not sayısı, görev sayısı gösterir
+- Periyodik ipuçları (8 sn)
+- Bounce animasyonu
+
+---
+
+## i18n Sistemi
+
+- `src/lib/i18n/translations.ts` → tüm key'ler, 10 dil
+- `src/lib/i18n/context.tsx` → `I18nProvider`, `useI18n()` hook
+- `src/components/LanguageSwitcher.tsx` → bayrak + isim dropdown
+- Dil localStorage'da saklanıyor (`pnot_lang`)
+- AR için RTL (`document.documentElement.dir = 'rtl'`)
+- Kullanım: `const { t } = useI18n(); t('nav.projects')`
+
+---
+
+## Global Topluluk
+
+- `/community` — herkese açık sayfa (login gerekmez görüntülemek için)
+- Proje paylaşımı: `shareProjectGlobally` cloud function
+- Yardım teklifi: `helpOffers` koleksiyonu
+- Filtre: helpType (feedback/collaboration/mentorship/code-review) + tag
+- Her yardım +30 XP
 
 ---
 
 ## Kritik Notlar
 
-### Tuzaklar
-- `next.config.ts` Next.js 14.2.5'te desteklenmiyor → `.mjs` kullan
+- `next.config.ts` desteklenmiyor → `.mjs` kullan
 - `postcss.config.js` olmadan Tailwind çalışmıyor
-- Mobile'da `@react-native-firebase/*` kullanılıyor (web'deki JS SDK değil)
-- Firestore rules: `members.map(m, m.uid)` syntax'ı dikkatli kullan
-
-### Ortam Değişkenleri
-- `apps/web/.env.local` → Firebase config + `NEXT_PUBLIC_APP_URL`
-- Hiçbir `.env` dosyası commit'lenmez!
+- Mobile: `@react-native-firebase/*` (web JS SDK değil)
+- Topluluk sayfası public, Firestore rules `allow read: if true`
 
 ---
 
-## Tamamlanan İşler (2026-03-18)
+## Tamamlanan (2026-03-18)
 
-- Monorepo yapısı kuruldu
-- Ortak TypeScript tipleri (`@pnot/shared`)
-- Firebase: Firestore rules, Storage rules, indexes, Cloud Functions v2
-- Web: Landing, Login (Google Auth), Dashboard (proje listesi), Proje sayfası, Sayfa görünümü (notlar + thread + görev), Davet linki kabul sayfası
-- Mobile: Expo skeleton, Google Auth, Proje listesi ekranı
+**v0.1:** Monorepo, Firebase, web MVP, mobile skeleton
+**v0.2:** Pinocchio karakterleri (SVG), XP sistemi, i18n (10 dil), Global topluluk sayfası, Cloud Functions (8 adet), Gamification şeması
 
 ---
 
 ## Sonraki Adımlar
 
 ### Öncelikli
-1. Firebase projesi oluştur (console.firebase.google.com) → `.env.local` doldur
+1. Firebase projesi + `.env.local` doldur
 2. `firebase deploy --only firestore:rules,functions`
-3. `cd apps/web && npm install && npm run dev`
-4. Kanban view ekle (görevleri kolona göre grupla)
-5. @mention sistemi
+3. `npm install && npm run dev`
+4. Karakter seçim ekranı (kayıt sonrası — `pino` vs `pina`)
+5. Kullanıcı profil sayfası (XP bar, outfit seçimi, streak)
+6. Kanban görünümü (görevleri kolona göre)
 
 ### İleride
-- iOS/Android build (EAS)
-- Pro plan + Stripe/RevenueCat ödeme entegrasyonu
-- Medya ekleme (Firebase Storage, pro only)
+- Stripe/RevenueCat Pro ödeme
+- WhatsApp mesaj parse (AI ile)
 - AI özeti ("Bu projedeki son 7 günü özetle")
-- PWA manifest + offline destek
+- Offline PWA desteği
+- iOS/Android EAS build
+- Ana ekran widget
