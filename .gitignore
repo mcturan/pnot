@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+.expo/
+*.local
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.firebase/

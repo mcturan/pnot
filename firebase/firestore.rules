@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isProjectMember(projectId) {
+      let project = get(/databases/$(database)/documents/projects/$(projectId));
+      return isSignedIn() && (
+        project.data.ownerUid == request.auth.uid ||
+        request.auth.uid in project.data.members.map(m, m.uid)
+      );
+    }
+
+    function isProjectOwner(projectId) {
+      let project = get(/databases/$(database)/documents/projects/$(projectId));
+      return isSignedIn() && project.data.ownerUid == request.auth.uid;
+    }
+
+    function isProjectEditor(projectId) {
+      let project = get(/databases/$(database)/documents/projects/$(projectId));
+      let member = project.data.members.filter(m, m.uid == request.auth.uid)[0];
+      return isSignedIn() && (
+        project.data.ownerUid == request.auth.uid ||
+        (member != null && member.role in ['owner', 'editor'])
+      );
+    }
+
+    // Users
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Projects
+    match /projects/{projectId} {
+      allow read: if isProjectMember(projectId);
+      allow create: if isSignedIn();
+      allow update: if isProjectOwner(projectId);
+      allow delete: if isProjectOwner(projectId);
+
+      // Pages within project
+      match /pages/{pageId} {
+        allow read: if isProjectMember(projectId);
+        allow create, update: if isProjectEditor(projectId);
+        allow delete: if isProjectOwner(projectId);
+
+        // Notes within page
+        match /notes/{noteId} {
+          allow read: if isProjectMember(projectId);
+          allow create: if isProjectMember(projectId);
+          allow update: if isProjectMember(projectId) && (
+            request.auth.uid == resource.data.authorUid ||
+            isProjectEditor(projectId)
+          );
+          allow delete: if isProjectMember(projectId) && (
+            request.auth.uid == resource.data.authorUid ||
+            isProjectOwner(projectId)
+          );
+        }
+      }
+    }
+
+    // Invites
+    match /invites/{token} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && (
+        get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerUid == request.auth.uid
+      );
+    }
+  }
+}
