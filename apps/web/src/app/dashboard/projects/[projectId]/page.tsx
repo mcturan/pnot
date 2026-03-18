@@ -158,6 +158,14 @@ export default function ProjectPage() {
         )}
       </div>
 
+      {/* Stats link */}
+      <Link
+        href={`/dashboard/projects/${projectId}/stats`}
+        className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-medium hover:bg-indigo-100 transition"
+      >
+        📊 Proje İstatistikleri
+      </Link>
+
       {/* Pages */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-semibold text-gray-700">Sayfalar</h2>

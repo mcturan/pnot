@@ -39,6 +39,11 @@ export default function ProjectScreen() {
           </View>
         </View>
 
+        {/* Stats shortcut */}
+        <TouchableOpacity style={s.statsBtn} onPress={() => router.push(`/project-stats/${projectId}`)}>
+          <Text style={s.statsBtnText}>📊 İstatistikleri Gör</Text>
+        </TouchableOpacity>
+
         {/* Pages */}
         <Text style={s.sectionTitle}>Sayfalar</Text>
         <FlatList
@@ -82,4 +87,6 @@ const s = StyleSheet.create({
   pageIcon:    { fontSize:20, marginRight:12 },
   pageTitle:   { flex:1, fontSize:15, fontWeight:'600', color:'#111827' },
   pageArrow:   { fontSize:22, color:'#d1d5db' },
+  statsBtn:    { marginHorizontal:16, marginBottom:8, backgroundColor:'#eef2ff', borderRadius:14, padding:12, alignItems:'center' },
+  statsBtnText:{ color:'#6366f1', fontWeight:'600', fontSize:13 },
 });
