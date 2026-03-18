@@ -19,17 +19,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (authLoading || profileLoading) return;
     if (!user) { router.push('/auth/login'); return; }
-    // First time: no character set → onboarding
     if (profile && !profile.character) router.push('/setup');
   }, [user, profile, authLoading, profileLoading, router]);
 
   if (authLoading || profileLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Yükleniyor...</div>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><div className="text-gray-400">Yükleniyor...</div></div>;
   }
+
+  const noseSize = !profile ? 5
+    : profile.xp >= 500 ? 1 : profile.xp >= 200 ? 2 : profile.xp >= 50 ? 3 : profile.xp >= 10 ? 4 : 5;
+
+  const isTeacher = profile?.role === 'teacher' || profile?.role === 'admin';
+  const isAdmin   = profile?.role === 'admin';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -37,34 +38,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="text-xl font-bold text-indigo-600">PNOT</Link>
           <nav className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">
-              {t('nav.projects')}
-            </Link>
-            <Link href="/community" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">
-              {t('nav.community')}
-            </Link>
+            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">{t('nav.projects')}</Link>
+            {isTeacher && (
+              <Link href="/dashboard/classroom" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">🏫 Sınıflarım</Link>
+            )}
+            <Link href="/community" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">{t('nav.community')}</Link>
+            {isAdmin && (
+              <Link href="/admin" className="text-sm text-red-400 hover:text-red-600 font-medium">⚙️ Admin</Link>
+            )}
           </nav>
         </div>
+
         <div className="flex items-center gap-3">
+          {/* Teacher apply CTA (if not yet a teacher) */}
+          {!isTeacher && profile?.teacherStatus !== 'pending' && (
+            <Link href="/apply-teacher"
+              className="hidden sm:flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100 transition">
+              🎓 Öğretmen misin?
+            </Link>
+          )}
+
           <LanguageSwitcher />
-          {/* Mini Pinocchio + XP */}
+
+          {/* Mini Pino + XP */}
           <Link href="/dashboard/profile" className="flex items-center gap-2 hover:bg-gray-50 rounded-xl px-2 py-1 transition">
-            <PinoCharacter
-              gender={profile?.character || 'pino'}
-              mood="happy"
-              noseSize={profile ? (profile.xp >= 500 ? 1 : profile.xp >= 200 ? 2 : profile.xp >= 50 ? 3 : profile.xp >= 10 ? 4 : 5) : 5}
-              size={32}
-              outfit={profile?.characterOutfit || 'casual'}
-            />
+            <PinoCharacter gender={profile?.character || 'pino'} mood="happy" noseSize={noseSize} size={32} outfit={profile?.characterOutfit || 'casual'} />
             <div className="hidden sm:flex flex-col items-start">
               <span className="text-xs font-semibold text-gray-700">Lv.{profile?.level || 1}</span>
               <span className="text-xs text-indigo-500">{profile?.xp || 0} XP</span>
             </div>
           </Link>
-          <button
-            onClick={() => signOut().then(() => router.push('/'))}
-            className="text-sm text-gray-400 hover:text-gray-600"
-          >
+
+          <button onClick={() => signOut().then(() => router.push('/'))} className="text-sm text-gray-400 hover:text-gray-600">
             {t('nav.logout')}
           </button>
         </div>
@@ -72,7 +77,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex-1">{children}</div>
 
-      {/* Floating Pino/Pina helper */}
       <PinoHelper
         gender={profile?.character || 'pino'}
         xp={profile?.xp || 0}

@@ -2,94 +2,104 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    function isSignedIn()  { return request.auth != null; }
+    function uid()         { return request.auth.uid; }
+    function userRole()    { return get(/databases/$(database)/documents/users/$(uid())).data.role; }
+    function isAdmin()     { return isSignedIn() && userRole() == 'admin'; }
+    function isTeacher()   { return isSignedIn() && userRole() in ['teacher','admin']; }
 
     function isProjectMember(projectId) {
-      let project = get(/databases/$(database)/documents/projects/$(projectId));
-      return isSignedIn() && (
-        project.data.ownerUid == request.auth.uid ||
-        request.auth.uid in project.data.members.map(m, m.uid)
-      );
+      let p = get(/databases/$(database)/documents/projects/$(projectId));
+      return isSignedIn() && (p.data.ownerUid == uid() || uid() in p.data.members.map(m, m.uid));
     }
-
     function isProjectOwner(projectId) {
-      let project = get(/databases/$(database)/documents/projects/$(projectId));
-      return isSignedIn() && project.data.ownerUid == request.auth.uid;
+      return isSignedIn() && get(/databases/$(database)/documents/projects/$(projectId)).data.ownerUid == uid();
     }
-
     function isProjectEditor(projectId) {
-      let project = get(/databases/$(database)/documents/projects/$(projectId));
-      let member = project.data.members.filter(m, m.uid == request.auth.uid)[0];
-      return isSignedIn() && (
-        project.data.ownerUid == request.auth.uid ||
-        (member != null && member.role in ['owner', 'editor'])
-      );
+      let p = get(/databases/$(database)/documents/projects/$(projectId));
+      let m = p.data.members.filter(m, m.uid == uid())[0];
+      return isSignedIn() && (p.data.ownerUid == uid() || (m != null && m.role in ['owner','editor']));
     }
 
-    // Users
-    match /users/{uid} {
+    // ── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == uid;
+      allow write: if isSignedIn() && uid() == userId;
     }
 
-    // FCM tokens
-    match /fcmTokens/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    match /fcmTokens/{userId} {
+      allow read, write: if isSignedIn() && uid() == userId;
     }
 
-    // Projects
+    // ── Teacher Applications ───────────────────────────────────────────────
+    match /teacherApplications/{appId} {
+      allow read:   if isAdmin() || (isSignedIn() && uid() == appId);
+      allow create: if isSignedIn() && uid() == appId;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Classrooms ─────────────────────────────────────────────────────────
+    match /classrooms/{classroomId} {
+      allow read: if isSignedIn() && (
+        resource.data.teacherUid == uid() ||
+        uid() in resource.data.studentUids ||
+        isAdmin()
+      );
+      allow create: if isTeacher();
+      allow update: if isSignedIn() && (
+        resource.data.teacherUid == uid() || isAdmin() ||
+        // Students can only join (add themselves to studentUids)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentUids'])
+      );
+      allow delete: if isSignedIn() && (resource.data.teacherUid == uid() || isAdmin());
+    }
+
+    // ── Projects ───────────────────────────────────────────────────────────
     match /projects/{projectId} {
-      allow read: if isProjectMember(projectId);
+      allow read:   if isProjectMember(projectId);
       allow create: if isSignedIn();
       allow update: if isProjectOwner(projectId);
       allow delete: if isProjectOwner(projectId);
 
       match /pages/{pageId} {
-        allow read: if isProjectMember(projectId);
+        allow read:          if isProjectMember(projectId);
         allow create, update: if isProjectEditor(projectId);
-        allow delete: if isProjectOwner(projectId);
+        allow delete:        if isProjectOwner(projectId);
 
         match /notes/{noteId} {
-          allow read: if isProjectMember(projectId);
+          allow read:   if isProjectMember(projectId);
           allow create: if isProjectMember(projectId);
-          allow update: if isProjectMember(projectId) && (
-            request.auth.uid == resource.data.authorUid || isProjectEditor(projectId)
-          );
-          allow delete: if isProjectMember(projectId) && (
-            request.auth.uid == resource.data.authorUid || isProjectOwner(projectId)
-          );
+          allow update: if isProjectMember(projectId) && (uid() == resource.data.authorUid || isProjectEditor(projectId));
+          allow delete: if isProjectMember(projectId) && (uid() == resource.data.authorUid || isProjectOwner(projectId));
         }
       }
     }
 
-    // Invites
+    // ── Invites ────────────────────────────────────────────────────────────
     match /invites/{token} {
-      allow read: if isSignedIn();
+      allow read:   if isSignedIn();
       allow create: if isSignedIn();
       allow delete: if isSignedIn() && (
-        get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerUid == request.auth.uid
+        get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerUid == uid()
       );
     }
 
-    // Global community projects
+    // ── Global Community ───────────────────────────────────────────────────
     match /globalProjects/{id} {
-      allow read: if true; // public
+      allow read:   if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.ownerUid ||
-        // Allow incrementing helpersCount/viewsCount
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpersCount', 'viewsCount'])
+        uid() == resource.data.ownerUid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpersCount','viewsCount'])
       );
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.ownerUid;
+      allow delete: if isSignedIn() && uid() == resource.data.ownerUid;
     }
 
-    // Help offers
     match /helpOffers/{id} {
-      allow read: if isSignedIn();
+      allow read:   if isSignedIn();
       allow create: if isSignedIn();
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.helperUid;
+      allow delete: if isSignedIn() && uid() == resource.data.helperUid;
     }
   }
 }
