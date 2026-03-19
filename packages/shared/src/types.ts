@@ -34,7 +34,25 @@ export interface UserProfile {
   helpGivenCount: number;
   // Teacher
   teacherStatus?: TeacherStatus;
+  // Plan management
+  proGrantedBy?: 'trial' | 'admin' | 'stripe';
+  trialEndsAt?:  Timestamp;
+  proExpiresAt?: Timestamp | null;
+  // Integrations
+  apiKey?:       string;
+  webhooks?:     WebhookConfig[];
 }
+
+export interface WebhookConfig {
+  id:        string;
+  url:       string;
+  events:    WebhookEvent[];
+  label?:    string;
+  active:    boolean;
+  createdAt: Timestamp;
+}
+
+export type WebhookEvent = 'note.created' | 'task.done' | 'member.joined';
 
 export function xpToLevel(xp: number): number {
   return Math.floor(Math.sqrt(xp / 50)) + 1;

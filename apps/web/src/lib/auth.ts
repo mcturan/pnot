@@ -16,13 +16,21 @@ export async function ensureUserProfile(user: User) {
   const ref = doc(db, 'users', user.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
+    // plan starts as 'free'; onUserCreated Cloud Function upgrades to 7-day Pro trial
     await setDoc(ref, {
-      uid: user.uid,
+      uid:         user.uid,
       displayName: user.displayName || 'User',
-      email: user.email,
-      photoURL: user.photoURL || '',
-      plan: 'free',
-      createdAt: serverTimestamp(),
+      email:       user.email,
+      photoURL:    user.photoURL || '',
+      plan:        'free',
+      role:        'user',
+      xp:          0,
+      level:       1,
+      streak:      0,
+      noteCount:   0,
+      taskCount:   0,
+      helpGivenCount: 0,
+      createdAt:   serverTimestamp(),
     });
   }
 }

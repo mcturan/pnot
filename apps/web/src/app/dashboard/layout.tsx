@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link href="/dashboard/classroom" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">🏫 Sınıflarım</Link>
             )}
             <Link href="/community" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">{t('nav.community')}</Link>
+            <Link href="/dashboard/settings" className="text-sm text-gray-500 hover:text-indigo-600 font-medium">⚙️ API</Link>
             {isAdmin && (
               <Link href="/admin" className="text-sm text-red-400 hover:text-red-600 font-medium">⚙️ Admin</Link>
             )}

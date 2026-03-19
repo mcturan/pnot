@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PNOT – Proje İstatistikleri Önizleme</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; }
+  .bar-animate { animation: grow 0.6s ease-out forwards; transform-origin: bottom; }
+  @keyframes grow { from { height: 0; } }
+</style>
+</head>
+<body class="p-8">
+
+<!-- Simulated navbar -->
+<div class="max-w-4xl mx-auto mb-2">
+  <div class="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-5 py-3 mb-6 shadow-sm">
+    <span class="text-xl font-bold text-indigo-600">PNOT</span>
+    <span class="text-gray-200">|</span>
+    <span class="text-sm text-gray-400">Dashboard</span>
+    <span class="text-gray-200">/</span>
+    <span class="text-sm text-gray-400">🚀 Mobil Uygulama</span>
+    <span class="text-gray-200">/</span>
+    <span class="text-sm text-gray-700 font-medium">📊 İstatistikler</span>
+    <div class="ml-auto flex items-center gap-2">
+      <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">M</div>
+      <span class="text-sm text-gray-600">mcturan</span>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 py-2">
+
+  <!-- Back link -->
+  <a href="#" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-6 transition-colors">
+    ← 🚀 Mobil Uygulama Projesi
+  </a>
+
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">📊 Proje İstatistikleri</h1>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="text-2xl mb-2">💬</div>
+      <div class="text-2xl font-bold text-gray-900">148</div>
+      <div class="text-sm font-medium text-gray-500 mt-0.5">Toplam Not</div>
+      <div class="text-xs text-gray-400 mt-1">32 yanıt dahil değil</div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="text-2xl mb-2">✅</div>
+      <div class="text-2xl font-bold text-gray-900">%72</div>
+      <div class="text-sm font-medium text-gray-500 mt-0.5">Görev Tamamlama</div>
+      <div class="text-xs text-gray-400 mt-1">18/25 görev</div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="text-2xl mb-2">👥</div>
+      <div class="text-2xl font-bold text-gray-900">5</div>
+      <div class="text-sm font-medium text-gray-500 mt-0.5">Üye</div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+      <div class="text-2xl mb-2">📄</div>
+      <div class="text-2xl font-bold text-gray-900">8</div>
+      <div class="text-sm font-medium text-gray-500 mt-0.5">Sayfa</div>
+    </div>
+  </div>
+
+  <!-- Activity Timeline -->
+  <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
+    <h2 class="text-base font-semibold text-gray-800 mb-4">📅 Son 14 Günlük Aktivite</h2>
+    <div class="flex items-end gap-1" style="height:96px">
+      <!-- bars: past 14 days, heights representing note counts -->
+      <script>
+        const data = [2,0,5,3,8,4,0,6,11,7,3,9,14,19];
+        const max = 19;
+        const days = ['4 Mar','5','6','7','8','9','10','11','12','13','14','15','16','17 Mar'];
+        data.forEach((v, i) => {
+          const pct = Math.round((v / max) * 72);
+          const isToday = i === 13;
+          const color = isToday ? '#6366f1' : v > 0 ? '#a5b4fc' : '#f3f4f6';
+          const h = Math.max(pct, v > 0 ? 4 : 2);
+          document.write(`
+            <div class="flex-1 flex flex-col items-center gap-1 group" title="${days[i]}: ${v} not">
+              <div class="flex items-end justify-center w-full">
+                ${v > 0 ? `<span style="font-size:9px;color:#6366f1;margin-bottom:2px">${v}</span>` : ''}
+              </div>
+              <div style="height:${h}px;background:${color};width:80%;border-radius:3px 3px 0 0;align-self:flex-end"></div>
+            </div>
+          `);
+        });
+      </script>
+    </div>
+    <div class="flex justify-between mt-1">
+      <span class="text-[10px] text-gray-300">4 Mar</span>
+      <span class="text-[10px] text-gray-300">17 Mar</span>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+
+    <!-- Member Stats -->
+    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+      <h2 class="text-base font-semibold text-gray-800 mb-4">👥 Üye Katılımı</h2>
+
+      <!-- Member 1 -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0">M</div>
+          <span class="text-sm font-medium text-gray-800 flex-1">mcturan</span>
+          <span class="text-xs text-gray-400">%41</span>
+          <span class="text-xs">🏆</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-indigo-500" style="width:100%"></div>
+          </div>
+          <span class="text-xs text-gray-400 w-8 text-right">61</span>
+        </div>
+        <div class="flex gap-4 mt-1.5">
+          <span class="text-[11px] text-gray-400">💬 52 not</span>
+          <span class="text-[11px] text-gray-400">↩ 9 yanıt</span>
+          <span class="text-[11px] text-gray-400">✅ 8/10 görev</span>
+        </div>
+      </div>
+
+      <!-- Member 2 -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600 shrink-0">A</div>
+          <span class="text-sm font-medium text-gray-800 flex-1">ahmet.kaya</span>
+          <span class="text-xs text-gray-400">%27</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-indigo-500" style="width:65%"></div>
+          </div>
+          <span class="text-xs text-gray-400 w-8 text-right">40</span>
+        </div>
+        <div class="flex gap-4 mt-1.5">
+          <span class="text-[11px] text-gray-400">💬 35 not</span>
+          <span class="text-[11px] text-gray-400">↩ 5 yanıt</span>
+          <span class="text-[11px] text-gray-400">✅ 6/9 görev</span>
+        </div>
+      </div>
+
+      <!-- Member 3 -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center text-xs font-bold text-green-600 shrink-0">Z</div>
+          <span class="text-sm font-medium text-gray-800 flex-1">zeynep.ay</span>
+          <span class="text-xs text-gray-400">%19</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-indigo-500" style="width:46%"></div>
+          </div>
+          <span class="text-xs text-gray-400 w-8 text-right">28</span>
+        </div>
+        <div class="flex gap-4 mt-1.5">
+          <span class="text-[11px] text-gray-400">💬 22 not</span>
+          <span class="text-[11px] text-gray-400">↩ 6 yanıt</span>
+        </div>
+      </div>
+
+      <!-- Member 4 -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 shrink-0">E</div>
+          <span class="text-sm font-medium text-gray-800 flex-1">emre.demir</span>
+          <span class="text-xs text-gray-400">%13</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-indigo-500" style="width:32%"></div>
+          </div>
+          <span class="text-xs text-gray-400 w-8 text-right">19</span>
+        </div>
+        <div class="flex gap-4 mt-1.5">
+          <span class="text-[11px] text-gray-400">💬 14 not</span>
+          <span class="text-[11px] text-gray-400">↩ 5 yanıt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Status -->
+    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+      <h2 class="text-base font-semibold text-gray-800 mb-4">📋 Görev Durumu</h2>
+
+      <!-- SVG Donut -->
+      <div class="flex items-center justify-center mb-6">
+        <div class="relative w-28 h-28">
+          <svg viewBox="0 0 36 36" class="w-full h-full" style="transform: rotate(-90deg)">
+            <!-- track -->
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" stroke-width="3.8"/>
+            <!-- done: 72% -->
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6ee7b7" stroke-width="3.8"
+              stroke-dasharray="72 100" stroke-dashoffset="0" stroke-linecap="round"/>
+            <!-- doing: 12% -->
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#93c5fd" stroke-width="3.8"
+              stroke-dasharray="12 100" stroke-dashoffset="-72" stroke-linecap="round"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-xl font-bold text-gray-800">%72</span>
+            <span class="text-[10px] text-gray-400">tamamlandı</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background:#e5e7eb"></span>
+          <span class="text-sm text-gray-600 flex-1">○ Yapılacak</span>
+          <span class="text-sm font-semibold text-gray-800">4</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background:#93c5fd"></span>
+          <span class="text-sm text-gray-600 flex-1">◑ Yapılıyor</span>
+          <span class="text-sm font-semibold text-gray-800">3</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background:#6ee7b7"></span>
+          <span class="text-sm text-gray-600 flex-1">● Tamamlandı</span>
+          <span class="text-sm font-semibold text-gray-800">18</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Breakdown -->
+  <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+    <h2 class="text-base font-semibold text-gray-800 mb-4">📄 Sayfa Aktivitesi</h2>
+    <div class="space-y-3">
+
+      <script>
+        const pages = [
+          { icon:'🔧', title:'Backend API', notes:42, tasks:8 },
+          { icon:'🎨', title:'UI Tasarım', notes:35, tasks:6 },
+          { icon:'📱', title:'Mobil Ekranlar', notes:28, tasks:5 },
+          { icon:'📋', title:'Genel', notes:21, tasks:3 },
+          { icon:'🐛', title:'Bug Takibi', notes:14, tasks:7 },
+          { icon:'📝', title:'Toplantı Notları', notes:8, tasks:0 },
+        ];
+        const maxN = 42;
+        pages.forEach(p => {
+          const pct = Math.round((p.notes / maxN) * 100);
+          document.write(`
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-base">${p.icon}</span>
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-indigo-600 flex-1 truncate">${p.title}</a>
+                <span class="text-xs text-gray-400">${p.notes} not</span>
+                ${p.tasks ? `<span class="text-xs text-gray-400">· ${p.tasks} görev</span>` : ''}
+              </div>
+              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-indigo-400" style="width:${pct}%"></div>
+              </div>
+            </div>
+          `);
+        });
+      </script>
+    </div>
+  </div>
+
+</div>
+
+<!-- Floating Pino helper (sağ alt köşe) -->
+<div style="position:fixed;bottom:24px;right:24px;z-index:50">
+  <div style="background:white;border:2px solid #e0e7ff;border-radius:16px;padding:12px 14px;box-shadow:0 4px 20px rgba(99,102,241,0.15);max-width:200px;margin-bottom:8px">
+    <p style="font-size:12px;color:#4b5563;margin:0">📊 İstatistikler her zaman gerçek zamanlı güncellenir!</p>
+  </div>
+  <!-- Mini Pino SVG -->
+  <div style="display:flex;justify-content:flex-end">
+    <svg width="60" height="70" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- body -->
+      <ellipse cx="30" cy="52" rx="13" ry="15" fill="#fde68a"/>
+      <!-- head -->
+      <ellipse cx="30" cy="28" rx="14" ry="13" fill="#fde68a"/>
+      <!-- hat -->
+      <ellipse cx="30" cy="15" rx="10" ry="4" fill="#1e3a5f"/>
+      <rect x="22" y="5" width="16" height="12" rx="3" fill="#1e3a5f"/>
+      <!-- eyes -->
+      <circle cx="26" cy="27" r="2.2" fill="#1f2937"/>
+      <circle cx="34" cy="27" r="2.2" fill="#1f2937"/>
+      <circle cx="26.8" cy="26.2" r="0.8" fill="white"/>
+      <circle cx="34.8" cy="26.2" r="0.8" fill="white"/>
+      <!-- smile -->
+      <path d="M25 33 Q30 37 35 33" stroke="#1f2937" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <!-- nose (short = high XP) -->
+      <line x1="30" y1="29" x2="30" y2="33" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+</body>
+</html>
