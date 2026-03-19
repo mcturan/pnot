@@ -238,6 +238,142 @@ services:
 
 ---
 
+## 💬 SORULAR & KARARLAR (2026-03-19)
+
+> Bu bölüm geliştirici notlarıdır. Hem PNOT hem de diğer projelere referans olarak tutulur.
+
+---
+
+### S: Başka platformlarla (Home Assistant vb.) nasıl entegre olur?
+
+**K:** İki yönlü entegrasyon:
+- **PNOT → Dış dünya:** REST API (`/api/v1/`) + API key auth. HA, Zapier, Node-RED, Make.com bu API'yi kullanabilir.
+- **Dış dünya → PNOT:** Webhook sistemi. Bir olay olunca (not, görev) dışarıya POST gönderilir.
+
+**Uygulanan:**
+- `POST /api/v1/notes` — API key ile not ekle
+- `GET /api/v1/stats/:projectId` — proje istatistikleri
+- `GET /api/v1/tasks/:projectId` — aktif görevler (HA sensörü için)
+- `saveWebhook` / `deleteWebhook` Cloud Functions
+- Settings sayfasında HA YAML + curl + Node-RED örnekleri
+
+**HA örneği — sensör:**
+```yaml
+sensor:
+  - platform: rest
+    resource: https://pnot.app/api/v1/tasks/PROJECT_ID?apiKey=ANAHTAR
+    name: PNOT Aktif Görevler
+    value_template: "{{ value_json.activeTasks }}"
+    scan_interval: 300
+```
+
+**HA örneği — hareket algılayınca PNOT'a not ekle:**
+```yaml
+rest_command:
+  pnot_add_note:
+    url: https://pnot.app/api/v1/notes
+    method: POST
+    headers:
+      X-Api-Key: ANAHTAR
+    payload: '{"projectId":"ID","pageId":"ID","content":"{{ message }}"}'
+```
+
+---
+
+### S: Ticari model ne olmalı? Trial mı, demo mu, kısıtlı mı? Abonelik mi tek seferlik mi?
+
+**K: Freemium + yıllık abonelik**
+
+| Plan | Fiyat | Özellikler |
+|------|-------|-----------|
+| Basic | Ücretsiz | 5 proje, sınırsız not/sayfa, topluluk |
+| Pro | 4$/ay veya 30$/yıl | Sınırsız proje, medya, AI, gelişmiş istatistik |
+| Teacher | Ücretsiz (onay ile) | Pro + sınıf yönetimi |
+
+**Neden yıllık abonelik, tek seferlik değil?**
+- Firebase/hosting maliyeti aylık devam eder
+- Kullanıcı büyüdükçe gelir de büyür
+- Tek seferlik satış: kullanıcı bir kez öder ama masraflar devam eder
+- SaaS standartı bu model
+
+**İlk kayıt:** 7 gün otomatik Pro trial → süre dolunca Basic'e düşer (kullanıcı Pro'yu yaşar, özler).
+
+**Uygulanan:**
+- `onUserCreated` CF: yeni user → `plan: 'pro'`, `proGrantedBy: 'trial'`, `trialEndsAt: +7 gün`
+- `checkTrials` scheduled CF: günlük trial bitim kontrolü
+- Settings sayfasında trial banner (kaç gün kaldı)
+
+---
+
+### S: Admin kullanıcılara pro verebilsin mi?
+
+**K: Evet, admin panelinden doğrudan.**
+
+- Admin sayfasına "Kullanıcı Yönetimi" sekmesi eklendi
+- E-posta ile kullanıcı arama
+- Sonsuz Pro, 30 gün Pro, 7 gün Pro ver veya Basic'e döndür
+- `adminSetPlan` Cloud Function — sadece admin role'u olan kullanıcı çağırabilir
+- Kullanım: beta kullanıcıları, influencer anlaşmaları, kurumsal hesaplar
+
+---
+
+### S: Kod güvenliği — şifreleme gerekli mi?
+
+**K: Hayır, şifrelemeye gerek yok.**
+
+Asıl değer sunucu tarafında (Firebase Functions). Strateji:
+
+| Katman | Durum |
+|--------|-------|
+| Next.js frontend | Derlenmiş JS — tersine mühendislik mümkün ama değersiz |
+| Firebase Functions | Tamamen sunucu tarafı — hiç görülemez |
+| Firestore Rules | Sunucu tarafı erişim kontrolü |
+| Mobile bundle | Obfuscation eklenebilir ama zorunlu değil |
+
+**Pratik önlemler:**
+1. Firebase App Check aktif et (sadece kendi uygulamandan gelen istekleri kabul et)
+2. Rate limiting — Cloud Functions'a saniyede max istek limiti
+3. `.env.local` asla git'e commit etme
+4. Kritik iş mantığı → hep Cloud Functions'ta (clientta değil)
+
+---
+
+### S: Hosting — en uygun başlangıç? Raspberry Pi + CasaOS?
+
+**K: Başlangıç Vercel + Firebase Spark = tamamen ücretsiz**
+
+| Aşama | Çözüm | Kapasite | Maliyet |
+|-------|-------|---------|--------|
+| 0–500 kullanıcı | Vercel Free + Firebase Spark | Fazlasıyla yeter | 0$/ay |
+| 500–5K | Firebase Blaze (PAYG) | Ölçeklenir | 10-50$/ay |
+| Self-host | CasaOS Docker + RPi4 + Cloudflare Tunnel | 100-200 eş zamanlı | Elektrik |
+| Büyüme | Hetzner VPS 4€/ay | Güvenilir | 4-20€/ay |
+
+**CasaOS + RPi4 kurulumu:**
+```yaml
+# docker-compose.yml
+services:
+  pnot-web:
+    image: node:20-alpine
+    working_dir: /app
+    volumes: [./apps/web:/app]
+    command: sh -c "npm install && npm run build && npm start"
+    ports: ["3000:3000"]
+    env_file: .env.local
+    restart: unless-stopped
+```
++ Cloudflare Tunnel ile ücretsiz SSL + sabit domain (dinamik IP sorun olmaz).
+
+**Karar:** Önce Vercel free → binlerce kullanıcı olursa her şeyi yaparız. CasaOS vs gerek bile olmaz büyük ihtimalle.
+
+---
+
+### S: Fiyatları ne zaman netleştiririz?
+
+**K:** Şimdilik 4$/ay / 30$/yıl olarak planladık, esnekti. Beta döneminde düşük tutmak mantıklı. Kullanıcı geri bildirimine göre revize.
+
+---
+
 ## 🏗️ TEKNİK BORÇ
 
 - [ ] Firestore `collectionGroup` index — tüm notları proje bazlı sorgulamak için
