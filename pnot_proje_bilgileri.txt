@@ -1,0 +1,162 @@
+PNOT PROJESİ - TAM BİLGİ LİSTESİ
+Oluşturma tarihi: 2026-03-29
+=========================================
+
+
+GENEL BİLGİLER
+--------------
+- Uygulama adı: PNOT
+- Domain: pnot.app
+- GitHub: https://github.com/mcturan/pnot
+- Yerel dizin: /home/turan/pnot-project
+- Mevcut sürüm: v0.7
+- Geliştirici: mcturan (mcturan@gmail.com)
+- Dil: TypeScript
+
+
+AMAÇ
+----
+- WhatsApp / Telegram gibi platformlarda kaybolan proje detaylarını organize etmek
+- Ekipler için yapılandırılmış, oyunlaştırılmış proje takip uygulaması
+- WhatsApp/Telegram'ın proje iletişimindeki yerini almak
+
+
+PLATFORM
+--------
+- Android (Expo / React Native)
+- iOS (Expo / React Native)
+- Web (Next.js + PWA desteği)
+
+
+TEKNİK MİMARİ - STACK
+----------------------
+Monorepo yapısı:
+  apps/web          → Next.js web uygulaması
+  apps/mobile       → Expo / React Native mobil uygulama
+  packages/shared   → Ortak kod ve tipler
+  firebase/         → Cloud Functions ve Firebase config
+
+Web:
+  - Next.js 14.2.5 (App Router)
+  - Tailwind CSS
+  - TypeScript
+
+Mobil:
+  - Expo
+  - React Native
+  - @react-native-firebase/* paketleri
+  - EAS Build (iOS/Android dağıtımı)
+
+Backend:
+  - Firebase Firestore (veritabanı, realtime listeners)
+  - Firebase Auth (kimlik doğrulama)
+  - Firebase Cloud Functions v2
+  - Firebase Cloud Messaging / FCM (bildirimler)
+  - Firebase Storage (medya dosyaları)
+
+i18n:
+  - 10 dil desteği: TR, EN, DE, ES, FR, PT, JA, RU, AR (RTL), ZH
+
+
+TEMEL ÖZELLİKLER
+-----------------
+
+1. Proje & Not Yönetimi
+   - Proje oluşturma → altında sayfalar/notlar
+   - Threaded notlar (nota altına not ekleyebilme)
+   - Bölüm bazlı görevler
+   - Collaborative sayfalar (birden fazla üye aynı anda düzenleyebilir)
+   - Kanban benzeri ama daha zengin yapı
+
+2. Pinokyo Sistemi (Gamification)
+   - Karakterler: Pino (erkek) ve Pina (kız)
+   - 5 farklı ruh hali: mutlu, düşünen, heyecanlı vb.
+   - 4 farklı kıyafet: casual, business, student, creative
+   - Burun uzunluğu: kullanıcının XP'sine göre değişir
+   - Çok yüksek XP'de burun kısalır (Usta seviyesi)
+   - PinoHelper: ekranın sağ altında yüzen, ipuçları veren ve istatistik gösteren asistan
+
+3. XP (Deneyim Puanı) Sistemi
+   - Kullanıcı aktivitesine göre XP kazanma
+   - Global toplulukta yardım teklif etme: +30 XP
+   - XP seviyesine göre Pinokyo karakteri evrim geçirir
+
+4. Öğretmen & Sınıf Sistemi
+   - Öğretmenler belge yükleyerek onay alabilir
+   - Onaylı öğretmenler ücretsiz Pro özelliklerine sahip olur
+   - Sınıf oluşturma
+   - Öğrenci davet etme
+   - Öğrencileri gruplara ayırma
+   - Grup projeleri yönetme
+
+5. AI Entegrasyonu
+   - WhatsApp / Telegram konuşmalarını kopyalayıp yapıştırma
+   - AI yardımıyla konuşmaları notlara dönüştürme
+
+6. Global Topluluk
+   - Projeleri herkese açık paylaşma
+   - Yardım teklif etme (+30 XP)
+   - İş birliği yapma
+
+7. İstatistikler
+   - Web ve mobil için detaylı aktivite grafikleri
+   - Üye katılım barları
+   - Görev durumları
+   - Donut chart ve Bar chart görselleri
+
+
+FİYATLANDIRMA MODELİ
+---------------------
+Ücretsiz tier:
+  - Maksimum 5 proje
+
+Ücretli (Pro) tier:
+  - Fotoğraf ve video ek desteği
+  - Sınırsız proje
+  - Aylık ve yıllık abonelik seçeneği
+
+Özel:
+  - Onaylı öğretmenler ücretsiz Pro özelliklerine sahip
+
+
+MEVCUT DURUM (v0.7)
+--------------------
+Tamamlananlar:
+  - Temel altyapı kurulumu
+  - Web MVP
+  - Pinokyo sistemi
+  - i18n (10 dil)
+  - Öğretmen sistemi
+  - AI import özelliği
+  - İstatistik sayfaları
+  - PWA desteği
+  - Mobil (Expo) iskelet yapısı
+
+
+SIRADAKI ADIMLAR (ÖNCELİKLİ)
+------------------------------
+1. Ticari Altyapı:
+   - Stripe entegrasyonu (Web ödemeleri)
+   - RevenueCat entegrasyonu (Mobil ödemeler)
+
+2. Entegrasyonlar:
+   - Home Assistant desteği
+   - Webhook desteği
+   - MQTT desteği
+
+3. Medya:
+   - Pro kullanıcılar için fotoğraf yükleme
+   - Pro kullanıcılar için video yükleme
+
+4. Yayınlama:
+   - Vercel deploy
+   - App Store başvurusu
+   - Google Play başvurusu
+
+
+GELİŞTİRME YAKLAŞIMI
+---------------------
+- Mobile-first tasarım
+- Realtime collaboration (Firestore listeners)
+- Basitlik öncelikli: WhatsApp/Telegram'ı proje takibinde geçmeli
+- Monorepo: web ve mobil arası maksimum kod paylaşımı
